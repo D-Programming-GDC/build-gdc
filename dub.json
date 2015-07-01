@@ -1,0 +1,12 @@
+{
+	"name": "build-gdc",
+	"targetType": "executable",
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2014, jpf",
+	"authors": ["jpf"],
+	"dependencies": {
+		"vibe-d": ">=0.7.18",
+		"d2sqlite3": "==0.6.0"
+	},
+	"versions": ["VibeCustomMain"]
+}

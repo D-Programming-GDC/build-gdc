@@ -1,0 +1,7 @@
+site_name: gdc-build
+pages:
+    - ['index.md']
+    - ['Cross-Compiler Basics.md']
+    - ['Getting Started.md']
+    - ['Advanced Usage.md']
+    - ['Internals.md']

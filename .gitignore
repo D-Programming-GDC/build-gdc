@@ -1,0 +1,4 @@
+dub.userprefs
+build-gdc
+dub.selections.json
+.dub/*
