@@ -16,39 +16,33 @@ Features
 --------
 
 Hosts:
-
 - Windows
 - Linux
 
 Architectures:
-
 - x86
 - x86_64
 - arm
 - armhf
 
 Compiler types:
-
 - native
 - cross-native
 - cross
 - canadian-cross
 
 Backends:
-
 - [crosstool-NG][2]
 
 Contribute
 ----------
-
-- Issue Tracker: github.com/$project/$project/issues
-- Source Code: github.com/$project/$project
+- Issue Tracker: http://bugzilla.gdcproject.org/
+- Source Code: https://github.com/D-Programming-GDC/build-gdc
 
 Support
 -------
-
 If you are having issues, please let us know.
-We have a mailing list located at: project@google-groups.com
+We have a forum located at: http://forum.dlang.org/group/gdc
 
 License
 -------
