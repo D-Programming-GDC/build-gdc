@@ -8,7 +8,7 @@ It's possible to start a shell in the container. Simply use this docker
 command:
 
 ```bash
-docker run -v ./shared-dir:/home/build/shared -i -t D-Programming-GDC/build-gdc /bin/bash
+docker run -v /path/to/shared-dir:/home/build/shared -i -t D-Programming-GDC/build-gdc /bin/bash
 ```
 
 It's then possible to build toolchains by calling `build-gdc` in the shell.
@@ -25,7 +25,7 @@ If you simply want to build a different revision once, first start a shell
 in the container:
 
 ```bash
-docker run -v ./shared-dir:/home/build/shared -i -t D-Programming-GDC/build-gdc /bin/bash
+docker run -v /path/to/shared-dir:/home/build/shared -i -t D-Programming-GDC/build-gdc /bin/bash
 ```
 
 Then change the directory to the `GDC` or `build-gdc-config` folder
@@ -71,7 +71,7 @@ docker build  -t jpf91/build-gdc .
 You can now use your container by specifying `jpf91/build-gdc` instead
 of `D-Programming-GDC/build-gdc`:
 ```bash
-docker run -v ./shared-dir:/home/build/shared -t jpf91/build-gdc /usr/bin/build-gdc build --toolchain=x86_64-w64-mingw32/gcc-4.9/arm-gdcproject-linux-gnueabihf --revision=V4_9:jpf91/gdc-4.9
+docker run -v /path/to/shared-dir:/home/build/shared -t jpf91/build-gdc /usr/bin/build-gdc build --toolchain=x86_64-w64-mingw32/gcc-4.9/arm-gdcproject-linux-gnueabihf --revision=V4_9:jpf91/gdc-4.9
 ```
 
 Note: we recommend to not use a `git fetch` command in the `Dockerfile`.

@@ -49,13 +49,13 @@ Here are some examples:
 - **native**: build=x86_64-unknown-linux, host=x86_64-unknown-linux, target=x86_64-unknown-linux
   The compiler was built on **x86_64-unknown-linux**, runs on **x86_64-unknown-linux**
   and generates output for **x86_64-unknown-linux**.
-- cross-compiler: build=x86_64-unknown-linux, host=x86_64-unknown-linux, target=arm-unknown-linux-gnueabi
+- **cross-compiler**: build=x86_64-unknown-linux, host=x86_64-unknown-linux, target=arm-unknown-linux-gnueabi
   The compiler was built on **x86_64-unknown-linux**, runs on **x86_64-unknown-linux**
   but generates output for **arm-unknown-linux-gnueabi**.
-- cross-native: build=x86_64-unknown-linux, host=arm-unknown-linux-gnueabi, target=arm-unknown-linux-gnueabi
+- **cross-native**: build=x86_64-unknown-linux, host=arm-unknown-linux-gnueabi, target=arm-unknown-linux-gnueabi
   The compiler was built on **x86_64-unknown-linux** but runs on **arm-unknown-linux-gnueabi**
   and generates output for **arm-unknown-linux-gnueabi**.
-- canadian-cross: build=x86_64-unknown-linux, host=x86_64-w64-mingw32, target=arm-unknown-linux-gnueabi
+- **canadian-cross**: build=x86_64-unknown-linux, host=x86_64-w64-mingw32, target=arm-unknown-linux-gnueabi
   The compiler was built on **x86_64-unknown-linux** but runs on **x86_64-w64-mingw32** and
   generates output for **arm-unknown-linux-gnueabi**.
 
