@@ -1,4 +1,4 @@
-site_name: gdc-build
+site_name: build-gdc
 pages:
     - ['index.md']
     - ['Cross-Compiler Basics.md']
