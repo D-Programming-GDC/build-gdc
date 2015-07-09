@@ -96,6 +96,5 @@ void printGenericHelp()
     writeln("Usage: build-gdc command [options]");
     writeln();
     writeln("Available commands:");
-    writeln("\tupdate-website       Only rebuild website from DB");
     writeln("\tbuild                Build toolchains");
 }
