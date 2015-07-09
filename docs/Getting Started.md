@@ -12,9 +12,6 @@ If you're on linux and using the devicemapper backend docker containers
 will have a storage limit of 10GB. This might be too low for some toolchain
 configurations. Setup dm.basesize as described [here][2].
 
-[1]: http://docs.docker.com/index.html
-[2]: https://github.com/docker/docker/blob/master/daemon/graphdriver/devmapper/README.md
-
 
 
 Basic build instructions
@@ -47,7 +44,7 @@ docker run -v /path/to/shared-dir:/home/build/shared -t D-Programming-GDC/build-
 ```
 
 The value passed to `--toolchain` is the relative path of the toolchain configuration.
-All toolchain configurations can be browsed at [github][1].
+All toolchain configurations can be browsed at [github][3].
 
 ### Building multiple toolchains at once
 
@@ -63,7 +60,7 @@ docker run -v /path/to/shared-dir:/home/build/shared -t D-Programming-GDC/build-
 The `build` command accepts some more options:
 
 * `--verbose` Emit debug output.
-* `--update-db` Update the database of successful builds for [gdcproject.org][2]
+* `--update-db` Update the database of successful builds for [gdcproject.org][4]
 
 
 
@@ -95,7 +92,7 @@ Building a list of toolchains
 -----------------------------
 
 Instead of using many `--toolchain=` arguments it's also possible
-to supply a JSON file listing all toolchain. An example JSON file could
+to supply a JSON file listing all toolchains. An example JSON file could
 look like this:
 ```json
 [
@@ -112,12 +109,14 @@ docker run -v /path/to/shared-dir:/home/build/shared -t D-Programming-GDC/build-
 
 Note: The json file must be in `/path/to/shared-dir` and the path must be adjusted as shown in the example.
 
-There are some predefined lists in the [build-gdc-config repository][3].
+There are some predefined lists in the [build-gdc-config repository][5].
 These can be used by simply passing the filename to `--toolchain-list`:
 ```bash
 docker run -v /path/to/shared-dir:/home/build/shared -t D-Programming-GDC/build-gdc /usr/bin/build-gdc build --toolchain-list=all-gcc5
 ```
 
-[1]: https://github.com/D-Programming-GDC/build-gdc-config/tree/master/configs
-[2]: http://gdcproject.org/downloads
-[3]: https://github.com/D-Programming-GDC/build-gdc-config/tree/master/lists
+[1]: http://docs.docker.com/index.html
+[2]: https://github.com/docker/docker/blob/master/daemon/graphdriver/devmapper/README.md
+[3]: https://github.com/D-Programming-GDC/build-gdc-config/tree/master/configs
+[4]: http://gdcproject.org/downloads
+[5]: https://github.com/D-Programming-GDC/build-gdc-config/tree/master/lists
