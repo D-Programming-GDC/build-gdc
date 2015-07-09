@@ -1,90 +1,116 @@
 module gdcb.website;
-import std.stdio;
+
+import std.algorithm, std.array, std.exception, std.array, std.stdio, std.file;
 import vibe.data.json;
+import gdcb.config, gdcb.builder;
 
-import gdcb.database, gdcb.config;
-
-import std.algorithm, std.exception, std.array;
-
-struct DownloadJSON
+class DownloadJSON
 {
     string[] multilib;
     string target, dmdFE, runtime, gcc, gdcRev, buildDate, url, comment, runtimeLink;
+    string srcID, buildID;
 }
 
-struct DownloadSetJSON
+class DownloadSetJSON
 {
-    string name, comment, targetHeader;
+    string name, comment, targetHeader, id;
     DownloadJSON[] downloads;
 }
 
-struct HostJSON
+class HostJSON
 {
     string name, triplet, archiveURL, comment;
     DownloadSetJSON[] sets;
 }
 
-struct DownloadSite
+class DownloadSite
 {
-    private DownloadDB _db;
+    bool oneBuildOnly;
 
-    this(DownloadDB db)
+    HostJSON[] hosts;
+
+    /**
+     * Load a .json file containing a list of downloads for
+     * gdcproject.org
+     */
+    static DownloadSite load(string path)
     {
-        _db = db;
+        auto content = readText(path);
+        DownloadSite result;
+        deserializeJson(result.hosts, parseJsonString(content));
+        return result;
+    }
+
+    /**
+     * Add a toolchain. Replaces older builds
+     */
+    void addToolchain(Toolchain toolchain)
+    {
+        // Use existing host if possible, otherwise create new
+        auto hostRange = hosts.find!"a.triplet == b"(toolchain.config.host.triplet);
+        HostJSON host;
+        if (hostRange.empty)
+        {
+            host = new HostJSON();
+            host.name = toolchain.config.host.name;
+            host.triplet = toolchain.config.host.triplet;
+            host.archiveURL = toolchain.config.host.archiveURL;
+            host.comment = toolchain.config.host.comment;
+            hosts ~= host;
+        }
+        else
+        {
+            host = hostRange.front;
+        }
+
+        // Use existing set if possible, otherwise create new
+        auto setRange = host.sets.find!"a.id == b"(toolchain.config.set);
+        DownloadSetJSON set;
+        if (setRange.empty)
+        {
+            set = new DownloadSetJSON();
+            auto configset = toolchain.config.host.downloadSets.find!"a.id == b"(
+                toolchain.config.set);
+            enforce(!configset.empty, "Unknown download set " ~ toolchain.config.set);
+
+            set.targetHeader = configset.front.targetHeader;
+            set.name = configset.front.name;
+            set.comment = configset.front.comment;
+            set.id = configset.front.id;
+            host.sets ~= set;
+        }
+        else
+        {
+            set = setRange.front;
+        }
+
+        //If toolchain with id exists, remove
+        if (oneBuildOnly)
+            set.downloads = set.downloads.remove!(a => a.srcID == toolchain.config.buildID)();
+        else
+            set.downloads = set.downloads.remove!(a => a.srcID == toolchain.toolchainID)();
+
+        //now add toolchain
+        auto download = new DownloadJSON();
+        download.srcID = toolchain.toolchainID;
+        download.target = toolchain.config.target;
+        download.dmdFE = toolchain.source.dmdFE;
+        download.runtime = toolchain.config.runtime;
+        download.gcc = toolchain.source.gccVersion;
+        download.gdcRev = toolchain.source.gdcRevision;
+        download.buildDate = format("%04d-%02d-%02d",
+            toolchain.source.date.year, toolchain.source.date.month, toolchain.source.date.day);
+        download.url = format("http://gdcproject.org/downloads/binaries/%s/%s",
+            toolchain.config.host.triplet, toolchain.filename);
+        download.comment = toolchain.config.comment;
+        download.runtimeLink = toolchain.config.runtimeLink;
+        download.multilib = toolchain.config.multilib;
+
+        set.downloads ~= download;
     }
 
     void writeJSON(string path)
     {
-        HostJSON[] hosts;
-        foreach (host; _db.getHosts())
-        {
-            HostJSON hostJS;
-            hostJS.name = host.name;
-            hostJS.triplet = host.triplet;
-            hostJS.archiveURL = host.archiveURL;
-            hostJS.comment = host.comment;
-            foreach (dlSet; _db.getSets(host.id))
-            {
-                DownloadSetJSON setJS;
-                setJS.name = dlSet.name;
-                setJS.comment = dlSet.comment;
-                setJS.targetHeader = dlSet.targetHeader;
-
-                auto targets = _db.getTargetsForSet(dlSet.id);
-                foreach (tnum, target; targets)
-                {
-                    auto feVers = _db.getFEVers(dlSet.id, target);
-                    feVers = sort!"a > b"(feVers).array();
-
-                    void addDL(string feVer)
-                    {
-                        DownloadJSON dlJS;
-                        auto downloads = _db.getDownloads(dlSet.id, target, feVer);
-                        downloads = sort!"a.buildDate > b.buildDate"(downloads).array();
-                        auto dl = downloads[0];
-
-                        dlJS.target = dl.target;
-                        dlJS.dmdFE = dl.dmdFE;
-                        dlJS.runtime = dl.runtime;
-                        dlJS.gcc = dl.gcc;
-                        dlJS.gdcRev = dl.gdcRev[0 .. 10];
-                        dlJS.buildDate = dl.buildDate;
-                        dlJS.url = dl.url;
-                        dlJS.comment = dl.comment;
-                        dlJS.runtimeLink = dl.runtimeLink;
-                        dlJS.multilib = dl.multilib;
-                        setJS.downloads ~= dlJS;
-                    }
-
-                    //FIXME: Add some way to ignore outdated downloads
-                    if (target != "native")
-                        addDL(feVers[0]);
-                }
-                hostJS.sets ~= setJS;
-            }
-            hosts ~= hostJS;
-        }
-
         File file = File(path, "w");
         file.rawWrite(serializeToJson(hosts).toPrettyString());
         file.close();

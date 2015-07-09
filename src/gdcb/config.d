@@ -16,6 +16,7 @@ struct Configuration
     string resultDBFile = "/home/build/shared/result/downloads.db";
     string resultJSONFile = "/home/build/shared/result/downloads.json";
     string gdcFolder = "/home/build/GDC";
+    string websiteFolder = "/home/build/gdcproject";
 }
 
 Configuration configuration;
@@ -31,6 +32,8 @@ struct ToolchainConfig
     @optional string[] multilib;
     @optional Json buildConfig;
     @optional string[] depends;
+    string buildID;
+
     string ctTarget;
     string backend;
 

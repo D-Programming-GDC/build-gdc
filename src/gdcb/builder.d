@@ -3,7 +3,7 @@ module gdcb.builder;
 import std.file, std.exception, std.path, std.stdio, vibe.data.json;
 import std.algorithm, std.range;
 import std.string : format;
-import gdcb.database, gdcb.config, gdcb.util, gdcb.website;
+import gdcb.config, gdcb.util, gdcb.website;
 import gdcb.backend.base, gdcb.backend.ctng;
 
 /**
@@ -12,7 +12,7 @@ import gdcb.backend.base, gdcb.backend.ctng;
 class Builder
 {
 private:
-    DownloadDB _db;
+    DownloadSite website;
 
     // The toolchains we actually want to build
     Toolchain[] _target;
@@ -151,12 +151,16 @@ private:
                 _buildCache[entry.toolchainID] = entry;
             }
 
-            if (updateDB && !entry.failed)
-                addDownloadToDB(entry);
             if (entry.failed)
+            {
                 failedToolchains ~= entry;
+            }
             else
+            {
+                website.addToolchain(entry);
                 succeededToolchains ~= entry;
+            }
+
             writeln();
             writeln(
                 "-------------------------------------------------------------------------------");
@@ -232,57 +236,17 @@ private:
     }
 
     /**
-     * Add a download to the database.
-     */
-    void addDownloadToDB(Toolchain toolchain)
-    {
-        Download entry;
-
-        auto host = _db.getHost(toolchain.config.host.triplet);
-        if (host == Host.init)
-        {
-            host.name = toolchain.config.host.name;
-            host.triplet = toolchain.config.host.triplet;
-            host.archiveURL = toolchain.config.host.archiveURL;
-            host.comment = toolchain.config.host.comment;
-            host.id = _db.addHost(host);
-        }
-
-        entry.hostID = host.id;
-        entry.setID = _db.getSet(host.id, toolchain.config.set).id;
-        entry.target = toolchain.config.target;
-        entry.dmdFE = toolchain.source.dmdFE;
-        entry.runtime = toolchain.config.runtime;
-        entry.gcc = toolchain.source.gccVersion;
-        entry.gdcRev = toolchain.source.gdcRevision;
-        entry.buildDate = format("%04d-%02d-%02d", toolchain.source.date.year,
-            toolchain.source.date.month, toolchain.source.date.day);
-        entry.url = format("http://gdcproject.org/downloads/binaries/%s/%s",
-            toolchain.config.host.triplet, toolchain.filename);
-        entry.comment = toolchain.config.comment;
-        entry.runtimeLink = toolchain.config.runtimeLink;
-        entry.multilib = toolchain.config.multilib;
-        _db.addDownload(entry);
-    }
-
-    /**
      * Load build database.
      */
-    void loadDB()
+    void loadWebsiteGIT()
     {
-        if (!configuration.resultDBFile.exists)
-            copy(configuration.sourceDBFile, configuration.resultDBFile);
-
-        _db = new DownloadDB(configuration.resultDBFile);
-    }
-
-    /**
-     * Write download.json file.
-     */
-    void writeWebsite()
-    {
-        auto site = DownloadSite(_db);
-        site.writeJSON(configuration.resultJSONFile);
+        writeln(": Updating gdcproject");
+        gdcb.util.chdir(configuration.websiteFolder);
+        execute("git", "remote", "update");
+        execute("git", "checkout", "origin/master");
+        website = DownloadSite.load(configuration.websiteFolder.buildPath("views",
+            "downloads.json"));
+        website.oneBuildOnly = !allBuilds;
     }
 
     /**
@@ -302,7 +266,8 @@ private:
     }
 
 public:
-    bool updateDB = false;
+    bool allBuilds = false;
+    bool initJSON = false;
     bool verbose = false;
 
     this()
@@ -311,16 +276,6 @@ public:
 
         _backends ~= new CTNGBackend();
         initFolders();
-    }
-
-    /**
-     * Load build database and regenerate downloads.json.
-     */
-    void updateWebsite()
-    {
-        loadDB();
-        writeWebsite();
-        _db.close();
     }
 
     /**
@@ -335,10 +290,15 @@ public:
     bool buildToolchains(string[] ids, GitID[GCCVersion] sourceInfo = null,
         GitID configID = GitID("origin/master"))
     {
-        if (updateDB)
+        if (initJSON)
         {
-            writeln("Loading database");
-            loadDB();
+            website = new DownloadSite();
+            website.oneBuildOnly = !allBuilds;
+        }
+        else
+        {
+            writeln("Loading website");
+            loadWebsiteGIT();
         }
 
         if (!(GCCVersion.snapshot in sourceInfo))
@@ -374,12 +334,8 @@ public:
 
         auto result = build();
 
-        if (updateDB)
-        {
-            writeln("Writing website information");
-            writeWebsite();
-            _db.close();
-        }
+        writeln("Writing website information");
+        website.writeJSON(configuration.resultJSONFile);
 
         return result;
     }

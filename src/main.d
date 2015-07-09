@@ -23,12 +23,8 @@ int main(string[] args)
     case "--help":
         printGenericHelp();
         return EXIT_SUCCESS;
-    case "update-website":
-        auto builder = new Builder();
-        builder.updateWebsite();
-        break;
     case "build":
-        bool updateDB, verbose;
+        bool allBuilds, verbose, initJSON;
         string[] toolchains;
         string toolchainList;
         GitID[GCCVersion] revs;
@@ -44,17 +40,18 @@ int main(string[] args)
         }
 
         getopt(args, config.noPassThrough, "help", &help, "toolchain",
-            &toolchains, "update-db", &updateDB, "toolchain-list",
-            &toolchainList, "verbose", &verbose, "revision", &handleRev,
-            "config-revision", &configRev);
+            &toolchains, "all-builds-json", &allBuilds, "init-json",
+            &initJSON, "toolchain-list", &toolchainList, "verbose", &verbose,
+            "revision", &handleRev, "config-revision", &configRev);
 
         if (help)
             writeln(
-                "Usage: build-gdc build [--verbose] [--toolchain='id'] [--toolchain-list='path']" ~ "\n\t [--update-db] [--revision=GCCVersion:rev] [--config-revision=rev]");
+                "Usage: build-gdc build [--verbose] [--toolchain='id'] [--toolchain-list='path']" ~ "\n\t [--all-builds-json] [--init-json] [--revision=GCCVersion:rev] [--config-revision=rev]");
         else
         {
             auto builder = new Builder();
-            builder.updateDB = updateDB;
+            builder.allBuilds = allBuilds;
+            builder.initJSON = initJSON;
             builder.verbose = verbose;
 
             if (toolchainList.length != 0)
