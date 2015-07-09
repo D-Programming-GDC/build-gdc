@@ -89,8 +89,6 @@ private:
      */
     bool build()
     {
-        bool result = true;
-
         scope (exit)
             gdcb.util.remove(configuration.resultTMPFolder);
         // Setup queue
@@ -121,6 +119,8 @@ private:
         writeln();
         writeln("===============================================================================");
 
+        Toolchain[] failedToolchains;
+        Toolchain[] succeededToolchains;
         foreach (set; _buildQueue)
         {
             writefln(": Building toolchain %s", set[$ - 1].toolchainID);
@@ -150,16 +150,28 @@ private:
                 build(entry);
                 _buildCache[entry.toolchainID] = entry;
             }
+
             if (updateDB && !entry.failed)
                 addDownloadToDB(entry);
             if (entry.failed)
-                result = false;
+                failedToolchains ~= entry;
+            else
+                succeededToolchains ~= entry;
             writeln();
             writeln(
                 "-------------------------------------------------------------------------------");
         }
 
-        return result;
+        writeln();
+        writeln("*********************** Summary ***********************");
+        writefln("Succeeded: %s", succeededToolchains.length);
+        foreach (entry; succeededToolchains)
+            writefln("    * %s", entry.toolchainID);
+        writefln("Failed: %s", failedToolchains.length);
+        foreach (entry; failedToolchains)
+            writefln("    * %s", entry.toolchainID);
+
+        return failedToolchains.empty;
     }
 
     /**
