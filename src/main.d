@@ -1,15 +1,15 @@
 module main;
 
-import std.getopt, std.stdio;
+import core.stdc.stdlib, std.getopt, std.stdio;
 import gdcb.builder;
 
-void main(string[] args)
+int main(string[] args)
 {
     string command;
     if (args.length < 2)
     {
         writeln("Usage: builder command [options]");
-        return;
+        return EXIT_SUCCESS;
     }
     else
     {
@@ -22,7 +22,7 @@ void main(string[] args)
     {
     case "--help":
         printGenericHelp();
-        return;
+        return EXIT_SUCCESS;
     case "update-website":
         auto builder = new Builder();
         builder.updateWebsite();
@@ -76,18 +76,22 @@ void main(string[] args)
                 string[] toolchainEntries;
                 string json = readText(toolchainList);
                 toolchainEntries.deserializeJson(parseJson(json));
-                builder.buildToolchains(toolchainEntries, revs, GitID(configRev));
+                return builder.buildToolchains(toolchainEntries, revs, GitID(configRev)) ? EXIT_SUCCESS
+                    : EXIT_FAILURE;
             }
             else if (toolchains.length != 0)
             {
-                builder.buildToolchains(toolchains, revs, GitID(configRev));
+                return builder.buildToolchains(toolchains, revs, GitID(configRev)) ? EXIT_SUCCESS
+                    : EXIT_FAILURE;
             }
         }
         break;
     default:
         writefln("Error: Unknown command %s", command);
-        return;
+        return EXIT_FAILURE;
     }
+
+    return EXIT_SUCCESS;
 }
 
 void printGenericHelp()

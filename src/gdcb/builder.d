@@ -83,9 +83,14 @@ private:
 
     /**
      * Calculate dependencies and do the build.
+     * 
+     * Returns:
+     *     false if one or more toolchains failed to build.
      */
-    void build()
+    bool build()
     {
+        bool result = true;
+
         scope (exit)
             gdcb.util.remove(configuration.resultTMPFolder);
         // Setup queue
@@ -147,10 +152,14 @@ private:
             }
             if (updateDB && !entry.failed)
                 addDownloadToDB(entry);
+            if (entry.failed)
+                result = false;
             writeln();
             writeln(
                 "-------------------------------------------------------------------------------");
         }
+
+        return result;
     }
 
     /**
@@ -304,8 +313,14 @@ public:
 
     /**
      * Build toolchains from ids.
+     * 
+     * Returns:
+     *     true if all toolchains were built. false if one or more toolchains failed to build.
+     * 
+     * Throws:
+     *     All kinds of exceptions on fatal errors.
      */
-    void buildToolchains(string[] ids, GitID[GCCVersion] sourceInfo = null,
+    bool buildToolchains(string[] ids, GitID[GCCVersion] sourceInfo = null,
         GitID configID = GitID("origin/master"))
     {
         if (updateDB)
@@ -345,7 +360,7 @@ public:
             _target ~= toolchain;
         }
 
-        build();
+        auto result = build();
 
         if (updateDB)
         {
@@ -353,6 +368,8 @@ public:
             writeWebsite();
             _db.close();
         }
+
+        return result;
     }
 }
 
