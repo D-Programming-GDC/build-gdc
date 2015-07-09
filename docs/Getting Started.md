@@ -31,7 +31,7 @@ archives between builds. This directory can be empty.
 gdc-build container. Docker will automatically download the container if
 it's not already cached.
 * `/usr/bin/build-gdc` is the build script which is run inside the docker container.
-It currently supports two commands: `build` and `update-website`.
+It currently supports one command: `build`.
 
 ### Build example
 
@@ -60,7 +60,9 @@ docker run -v /path/to/shared-dir:/home/build/shared -t D-Programming-GDC/build-
 The `build` command accepts some more options:
 
 * `--verbose` Emit debug output.
-* `--update-db` Update the database of successful builds for [gdcproject.org][4]
+* `--init-json` Do not merge download list from [gdcproject.org][4], start a new list.
+* `--all-builds-json` By default only one gcc version per toolchain is saved (e.g. we only want one of x86_64-w64-mingw32/gcc-4.9/arm-gdcproject-linux-gnueabihf and
+   x86_64-w64-mingw32/gcc-5/arm-gdcproject-linux-gnueabihf on the download page). Set this flag to include all builds in the json file.
 
 
 
