@@ -8,7 +8,7 @@ class DownloadJSON
 {
     string[] multilib;
     string target, dmdFE, runtime, gcc, gdcRev, buildDate, url, comment, runtimeLink;
-    string srcID, buildID;
+    string srcID, buildID, filename;
 }
 
 class DownloadSetJSON
@@ -94,6 +94,7 @@ class DownloadSite
 
         //now add toolchain
         auto download = new DownloadJSON();
+        download.filename = toolchain.filename;
         download.srcID = toolchain.toolchainID;
         download.buildID = toolchain.config.buildID;
         download.target = toolchain.config.target;
