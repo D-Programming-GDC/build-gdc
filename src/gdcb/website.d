@@ -104,8 +104,7 @@ class DownloadSite
         download.gdcRev = toolchain.source.gdcRevision;
         download.buildDate = format("%04d-%02d-%02d",
             toolchain.source.date.year, toolchain.source.date.month, toolchain.source.date.day);
-        download.url = format("http://gdcproject.org/downloads/binaries/%s/%s",
-            toolchain.config.host.triplet, toolchain.filename);
+        download.url = "";
         download.comment = toolchain.config.comment;
         download.runtimeLink = toolchain.config.runtimeLink;
         download.multilib = toolchain.config.multilib;
