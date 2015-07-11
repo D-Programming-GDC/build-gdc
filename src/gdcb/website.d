@@ -33,12 +33,14 @@ class DownloadSite
      * Load a .json file containing a list of downloads for
      * gdcproject.org
      */
-    static DownloadSite load(string path)
+    this(string path)
     {
         auto content = readText(path);
-        DownloadSite result;
-        deserializeJson(result.hosts, parseJsonString(content));
-        return result;
+        deserializeJson(hosts, parseJsonString(content));
+    }
+
+    this()
+    {
     }
 
     /**
@@ -86,13 +88,14 @@ class DownloadSite
 
         //If toolchain with id exists, remove
         if (oneBuildOnly)
-            set.downloads = set.downloads.remove!(a => a.srcID == toolchain.config.buildID)();
+            set.downloads = set.downloads.remove!(a => a.buildID == toolchain.config.buildID)();
         else
             set.downloads = set.downloads.remove!(a => a.srcID == toolchain.toolchainID)();
 
         //now add toolchain
         auto download = new DownloadJSON();
         download.srcID = toolchain.toolchainID;
+        download.buildID = toolchain.config.buildID;
         download.target = toolchain.config.target;
         download.dmdFE = toolchain.source.dmdFE;
         download.runtime = toolchain.config.runtime;

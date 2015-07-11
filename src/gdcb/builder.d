@@ -244,8 +244,7 @@ private:
         gdcb.util.chdir(configuration.websiteFolder);
         execute("git", "remote", "update");
         execute("git", "checkout", "origin/master");
-        website = DownloadSite.load(configuration.websiteFolder.buildPath("views",
-            "downloads.json"));
+        website = new DownloadSite(configuration.websiteFolder.buildPath("views", "downloads.json"));
         website.oneBuildOnly = !allBuilds;
     }
 
