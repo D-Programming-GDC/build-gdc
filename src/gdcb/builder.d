@@ -207,6 +207,13 @@ private:
                     writefln(": Result is at '%s'", toolchain.resultFile);
                 if (!toolchain.dependencyOnly)
                 {
+                    import std.digest.md;
+
+                    writeln(": Generating MD5 sum");
+                    toolchain.md5Sum = File(toolchain.resultFile, "r").byChunk(8 * 1024).md5Of().toHexString!(
+                        LetterCase.lower).idup;
+                    if (verbose)
+                        writefln(": MD5 is '%s'", toolchain.md5Sum);
                     auto resultFolder = configuration.resultFolder.buildPath(
                         toolchain.resultPath.relativePath(configuration.resultTMPFolder));
                     tryMkdir(resultFolder);
@@ -388,6 +395,11 @@ class Toolchain
      * Set by builder.
      */
     string filename;
+
+    /**
+     * MD5 sum of generated archive
+     */
+    string md5Sum;
 
     this(ToolchainConfig config_, bool dependency = false)
     {

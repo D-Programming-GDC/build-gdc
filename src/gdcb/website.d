@@ -8,7 +8,7 @@ class DownloadJSON
 {
     string[] multilib;
     string target, dmdFE, runtime, gcc, gdcRev, buildDate, url, comment, runtimeLink;
-    string srcID, buildID, filename;
+    string srcID, buildID, filename, md5Sum;
 }
 
 class DownloadSetJSON
@@ -121,6 +121,7 @@ private:
         download.comment = toolchain.config.comment;
         download.runtimeLink = toolchain.config.runtimeLink;
         download.multilib = toolchain.config.multilib;
+        download.md5Sum = toolchain.md5Sum;
 
         return download;
     }
