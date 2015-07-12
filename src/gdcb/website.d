@@ -25,31 +25,40 @@ class HostJSON
 
 class DownloadSite
 {
-    bool oneBuildOnly;
-
-    HostJSON[] hosts;
-
-    /**
-     * Load a .json file containing a list of downloads for
-     * gdcproject.org
-     */
-    this(string path)
+private:
+    string getDownloadURL(Toolchain toolchain)
     {
-        auto content = readText(path);
-        deserializeJson(hosts, parseJsonString(content));
+        import std.algorithm : endsWith;
+
+        string extension;
+        if (toolchain.filename.endsWith(".tar.xz"))
+            extension = "tar.xz";
+        else if (toolchain.filename.endsWith(".7z"))
+            extension = "tar.xz";
+        else
+            throw new Exception("Invalid extension in filname: " ~ toolchain.filename);
+
+        if (toolchain.config.host.triplet == toolchain.config.target)
+        {
+            // /binaries/4.8.4/x86_64-linux-gnu/gdc-4.8.4+2.061.2.tar.xz
+            return format("http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s+%s.%s",
+                toolchain.source.gccVersion, toolchain.config.host.triplet,
+                toolchain.source.gccVersion, toolchain.source.dmdFE, extension);
+        }
+        else
+        {
+            // /binaries/4.8.4/x86_64-linux-gnu/gdc-4.8.4-arm-linux-gnueabi+2.061.2.tar.xz
+            return format("http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s-%s+%s.%s",
+                toolchain.source.gccVersion, toolchain.config.host.triplet,
+                toolchain.source.gccVersion, toolchain.config.target,
+                toolchain.source.dmdFE, extension);
+        }
     }
 
-    this()
+    /// Use existing host if possible, otherwise create new
+    HostJSON getHost(ref HostJSON[] root, Toolchain toolchain)
     {
-    }
-
-    /**
-     * Add a toolchain. Replaces older builds
-     */
-    void addToolchain(Toolchain toolchain)
-    {
-        // Use existing host if possible, otherwise create new
-        auto hostRange = hosts.find!"a.triplet == b"(toolchain.config.host.triplet);
+        auto hostRange = root.find!"a.triplet == b"(toolchain.config.host.triplet);
         HostJSON host;
         if (hostRange.empty)
         {
@@ -58,15 +67,20 @@ class DownloadSite
             host.triplet = toolchain.config.host.triplet;
             host.archiveURL = toolchain.config.host.archiveURL;
             host.comment = toolchain.config.host.comment;
-            hosts ~= host;
+            root ~= host;
         }
         else
         {
             host = hostRange.front;
         }
 
-        // Use existing set if possible, otherwise create new
-        auto setRange = host.sets.find!"a.id == b"(toolchain.config.set);
+        return host;
+    }
+
+    /// Use existing set if possible, otherwise create new
+    DownloadSetJSON getSet(ref DownloadSetJSON[] root, Toolchain toolchain)
+    {
+        auto setRange = root.find!"a.id == b"(toolchain.config.set);
         DownloadSetJSON set;
         if (setRange.empty)
         {
@@ -79,21 +93,20 @@ class DownloadSite
             set.name = configset.front.name;
             set.comment = configset.front.comment;
             set.id = configset.front.id;
-            host.sets ~= set;
+            root ~= set;
         }
         else
         {
             set = setRange.front;
         }
 
-        //If toolchain with id exists, remove
-        if (oneBuildOnly)
-            set.downloads = set.downloads.remove!(a => a.buildID == toolchain.config.buildID)();
-        else
-            set.downloads = set.downloads.remove!(a => a.srcID == toolchain.toolchainID)();
+        return set;
+    }
 
-        //now add toolchain
+    DownloadJSON getDownload(Toolchain toolchain)
+    {
         auto download = new DownloadJSON();
+
         download.filename = toolchain.filename;
         download.srcID = toolchain.toolchainID;
         download.buildID = toolchain.config.buildID;
@@ -109,13 +122,102 @@ class DownloadSite
         download.runtimeLink = toolchain.config.runtimeLink;
         download.multilib = toolchain.config.multilib;
 
+        return download;
+    }
+
+    void addToDownload(Toolchain toolchain)
+    {
+        HostJSON host = getHost(dlHosts, toolchain);
+        DownloadSetJSON set = getSet(host.sets, toolchain);
+
+        // We only keep one build with same buildID in download list
+        set.downloads = set.downloads.remove!(a => a.buildID == toolchain.config.buildID)();
+
+        auto download = getDownload(toolchain);
+        download.url = getDownloadURL(toolchain);
         set.downloads ~= download;
     }
 
-    void writeJSON(string path)
+    void addToDatabase(Toolchain toolchain)
+    {
+        HostJSON host = getHost(dbHosts, toolchain);
+        DownloadSetJSON set = getSet(host.sets, toolchain);
+
+        auto download = getDownload(toolchain);
+        download.url = getDownloadURL(toolchain);
+        set.downloads ~= download;
+    }
+
+    void addToBuilds(Toolchain toolchain)
+    {
+        HostJSON host = getHost(builtHosts, toolchain);
+        DownloadSetJSON set = getSet(host.sets, toolchain);
+
+        set.downloads ~= getDownload(toolchain);
+    }
+
+public:
+    // downloads.json
+    HostJSON[] dlHosts;
+
+    // database.json
+    HostJSON[] dbHosts;
+
+    // built-toolchains.json
+    HostJSON[] builtHosts;
+
+    this()
+    {
+    }
+
+    /**
+     * Load a .json file containing a list of active downloads for
+     * gdcproject.org
+     */
+    void loadDownloadList(string path)
+    {
+        auto content = readText(path);
+        deserializeJson(dlHosts, parseJsonString(content));
+    }
+
+    /**
+     * Load a .json file containing a list of all builds at
+     * gdcproject.org
+     */
+    void loadDatabase(string path)
+    {
+        auto content = readText(path);
+        deserializeJson(dbHosts, parseJsonString(content));
+    }
+
+    void saveDownloadList(string path)
     {
         File file = File(path, "w");
-        file.rawWrite(serializeToJson(hosts).toPrettyString());
+        file.rawWrite(serializeToJson(dlHosts).toPrettyString());
         file.close();
+    }
+
+    void saveDatabase(string path)
+    {
+        File file = File(path, "w");
+        file.rawWrite(serializeToJson(dbHosts).toPrettyString());
+        file.close();
+    }
+
+    void saveBuilds(string path)
+    {
+        File file = File(path, "w");
+        file.rawWrite(serializeToJson(builtHosts).toPrettyString());
+        file.close();
+    }
+
+    /**
+     * Add a toolchain. Replaces older builds
+     */
+    void addToolchain(Toolchain toolchain)
+    {
+        addToBuilds(toolchain);
+        addToDatabase(toolchain);
+        addToDownload(toolchain);
     }
 }

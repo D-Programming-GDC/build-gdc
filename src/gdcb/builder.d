@@ -244,8 +244,6 @@ private:
         gdcb.util.chdir(configuration.websiteFolder);
         execute("git", "remote", "update");
         execute("git", "checkout", "origin/master");
-        website = new DownloadSite(configuration.websiteFolder.buildPath("views", "downloads.json"));
-        website.oneBuildOnly = !allBuilds;
     }
 
     /**
@@ -265,8 +263,8 @@ private:
     }
 
 public:
-    bool allBuilds = false;
-    bool initJSON = false;
+    bool initDL = false;
+    bool initDB = false;
     bool verbose = false;
 
     this()
@@ -289,16 +287,13 @@ public:
     bool buildToolchains(string[] ids, GitID[GCCVersion] sourceInfo = null,
         GitID configID = GitID("origin/master"))
     {
-        if (initJSON)
-        {
-            website = new DownloadSite();
-            website.oneBuildOnly = !allBuilds;
-        }
-        else
-        {
-            writeln("Loading website");
-            loadWebsiteGIT();
-        }
+        loadWebsiteGIT();
+        website = new DownloadSite();
+        if (!initDL)
+            website.loadDownloadList(configuration.websiteFolder.buildPath("views",
+                "downloads.json"));
+        if (!initDB)
+            website.loadDatabase(configuration.websiteFolder.buildPath("views", "database.json"));
 
         if (!(GCCVersion.snapshot in sourceInfo))
             sourceInfo[GCCVersion.snapshot] = GitID("origin/master");
@@ -334,7 +329,10 @@ public:
         auto result = build();
 
         writeln("Writing website information");
-        website.writeJSON(configuration.resultJSONFile);
+
+        website.saveDownloadList(configuration.resultDLFile);
+        website.saveDatabase(configuration.resultDBFile);
+        website.saveBuilds(configuration.resultBuildFile);
 
         return result;
     }

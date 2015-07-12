@@ -13,8 +13,9 @@ struct Configuration
     string sharedFolder = "/home/build/shared";
     string resultFolder = "/home/build/shared/result";
     string resultTMPFolder = "/home/build/result-tmp";
-    string resultDBFile = "/home/build/shared/result/downloads.db";
-    string resultJSONFile = "/home/build/shared/result/downloads.json";
+    string resultDLFile = "/home/build/shared/result/downloads.json";
+    string resultDBFile = "/home/build/shared/result/database.json";
+    string resultBuildFile = "/home/build/shared/result/built-toolchains.json";
     string gdcFolder = "/home/build/GDC";
     string websiteFolder = "/home/build/gdcproject";
 }
