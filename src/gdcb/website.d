@@ -26,7 +26,7 @@ class HostJSON
 class DownloadSite
 {
 private:
-    string getDownloadURL(Toolchain toolchain)
+    string getDownloadURL(Toolchain toolchain, uint num)
     {
         import std.algorithm : endsWith;
 
@@ -41,17 +41,32 @@ private:
         if (toolchain.config.host.triplet == toolchain.config.target)
         {
             // /binaries/4.8.4/x86_64-linux-gnu/gdc-4.8.4+2.061.2.tar.xz
-            return format("http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s+%s.%s",
-                toolchain.source.gccVersion, toolchain.config.host.triplet,
-                toolchain.source.gccVersion, toolchain.source.dmdFE, extension);
+            if (num == 0)
+                return format(
+                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s+%s.%s",
+                    toolchain.source.gccVersion, toolchain.config.host.triplet,
+                    toolchain.source.gccVersion, toolchain.source.dmdFE, extension);
+            else
+                return format(
+                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s+%s_r%s.%s",
+                    toolchain.source.gccVersion, toolchain.config.host.triplet,
+                    toolchain.source.gccVersion, toolchain.source.dmdFE, num, extension);
         }
         else
         {
             // /binaries/4.8.4/x86_64-linux-gnu/gdc-4.8.4-arm-linux-gnueabi+2.061.2.tar.xz
-            return format("http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s-%s+%s.%s",
-                toolchain.source.gccVersion, toolchain.config.host.triplet,
-                toolchain.source.gccVersion, toolchain.config.target,
-                toolchain.source.dmdFE, extension);
+            if (num == 0)
+                return format(
+                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s-%s+%s.%s",
+                    toolchain.source.gccVersion, toolchain.config.host.triplet,
+                    toolchain.source.gccVersion, toolchain.config.target,
+                    toolchain.source.dmdFE, extension);
+            else
+                return format(
+                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s-%s+%s_r%s.%s",
+                    toolchain.source.gccVersion, toolchain.config.host.triplet,
+                    toolchain.source.gccVersion, toolchain.config.target,
+                    toolchain.source.dmdFE, num, extension);
         }
     }
 
@@ -126,7 +141,7 @@ private:
         return download;
     }
 
-    void addToDownload(Toolchain toolchain)
+    void addToDownload(Toolchain toolchain, uint num)
     {
         HostJSON host = getHost(dlHosts, toolchain);
         DownloadSetJSON set = getSet(host.sets, toolchain);
@@ -135,18 +150,31 @@ private:
         set.downloads = set.downloads.remove!(a => a.buildID == toolchain.config.buildID)();
 
         auto download = getDownload(toolchain);
-        download.url = getDownloadURL(toolchain);
+        download.url = getDownloadURL(toolchain, num);
         set.downloads ~= download;
     }
 
-    void addToDatabase(Toolchain toolchain)
+    // Returns release number
+    uint addToDatabase(Toolchain toolchain)
     {
         HostJSON host = getHost(dbHosts, toolchain);
         DownloadSetJSON set = getSet(host.sets, toolchain);
 
+        // Get a unique url
+        uint num = 0;
+        string url;
+        do
+        {
+            url = getDownloadURL(toolchain, num);
+            num++;
+        }
+        while (set.downloads.canFind!"a.url == b"(url));
+
         auto download = getDownload(toolchain);
-        download.url = getDownloadURL(toolchain);
+        download.url = url;
         set.downloads ~= download;
+
+        return num - 1;
     }
 
     void addToBuilds(Toolchain toolchain)
@@ -218,7 +246,8 @@ public:
     void addToolchain(Toolchain toolchain)
     {
         addToBuilds(toolchain);
-        addToDatabase(toolchain);
-        addToDownload(toolchain);
+
+        auto num = addToDatabase(toolchain);
+        addToDownload(toolchain, num);
     }
 }
