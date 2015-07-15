@@ -1,6 +1,7 @@
 module gdcb.website;
 
-import std.algorithm, std.array, std.exception, std.array, std.stdio, std.file;
+import std.algorithm, std.array, std.exception, std.array, std.stdio, std.file,
+    std.range;
 import vibe.data.json;
 import gdcb.config, gdcb.builder;
 
@@ -9,6 +10,7 @@ class DownloadJSON
     string[] multilib;
     string target, dmdFE, runtime, gcc, gdcRev, buildDate, url, comment, runtimeLink;
     string srcID, buildID, filename, md5Sum;
+    uint release;
 }
 
 class DownloadSetJSON
@@ -26,7 +28,7 @@ class HostJSON
 class DownloadSite
 {
 private:
-    string getDownloadURL(Toolchain toolchain, uint num)
+    string getDownloadURL(Toolchain toolchain)
     {
         import std.algorithm : endsWith;
 
@@ -41,32 +43,17 @@ private:
         if (toolchain.config.host.triplet == toolchain.config.target)
         {
             // /binaries/4.8.4/x86_64-linux-gnu/gdc-4.8.4+2.061.2.tar.xz
-            if (num == 0)
-                return format(
-                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s+%s.%s",
-                    toolchain.source.gccVersion, toolchain.config.host.triplet,
-                    toolchain.source.gccVersion, toolchain.source.dmdFE, extension);
-            else
-                return format(
-                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s+%s_r%s.%s",
-                    toolchain.source.gccVersion, toolchain.config.host.triplet,
-                    toolchain.source.gccVersion, toolchain.source.dmdFE, num, extension);
+            return format("http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s+%s.%s",
+                toolchain.source.gccVersion, toolchain.config.host.triplet,
+                toolchain.source.gccVersion, toolchain.source.dmdFE, extension);
         }
         else
         {
             // /binaries/4.8.4/x86_64-linux-gnu/gdc-4.8.4-arm-linux-gnueabi+2.061.2.tar.xz
-            if (num == 0)
-                return format(
-                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s-%s+%s.%s",
-                    toolchain.source.gccVersion, toolchain.config.host.triplet,
-                    toolchain.source.gccVersion, toolchain.config.target,
-                    toolchain.source.dmdFE, extension);
-            else
-                return format(
-                    "http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s-%s+%s_r%s.%s",
-                    toolchain.source.gccVersion, toolchain.config.host.triplet,
-                    toolchain.source.gccVersion, toolchain.config.target,
-                    toolchain.source.dmdFE, num, extension);
+            return format("http://gdcproject.org/downloads/binaries/%s/%s/gdc-%s-%s+%s.%s",
+                toolchain.source.gccVersion, toolchain.config.host.triplet,
+                toolchain.source.gccVersion, toolchain.config.target,
+                toolchain.source.dmdFE, extension);
         }
     }
 
@@ -150,7 +137,8 @@ private:
         set.downloads = set.downloads.remove!(a => a.buildID == toolchain.config.buildID)();
 
         auto download = getDownload(toolchain);
-        download.url = getDownloadURL(toolchain, num);
+        download.url = getDownloadURL(toolchain);
+        download.release = num;
         set.downloads ~= download;
     }
 
@@ -160,21 +148,14 @@ private:
         HostJSON host = getHost(dbHosts, toolchain);
         DownloadSetJSON set = getSet(host.sets, toolchain);
 
-        // Get a unique url
-        uint num = 0;
-        string url;
-        do
-        {
-            url = getDownloadURL(toolchain, num);
-            num++;
-        }
-        while (set.downloads.canFind!"a.url == b"(url));
-
         auto download = getDownload(toolchain);
+        auto url = getDownloadURL(toolchain);
+        uint release = cast(uint)(set.downloads.filter!(a => a.url == url).walkLength()) + 1;
         download.url = url;
+        download.release = release;
         set.downloads ~= download;
 
-        return num - 1;
+        return release;
     }
 
     void addToBuilds(Toolchain toolchain)
