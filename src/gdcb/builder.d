@@ -197,6 +197,8 @@ private:
             try
             {
                 tryMkdir(toolchain.resultPath);
+                tryRemove(configuration.tmpFolder);
+                tryMkdir(configuration.tmpFolder);
                 writeln(": Initializing build");
                 toolchain.builder.initilize();
                 writeln(": Installing dependencies");

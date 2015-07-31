@@ -154,13 +154,8 @@ public:
         _vanillaFolder = _sourceFolder.buildPath("vanilla");
         _snapshotFolder = configuration.tmpFolder.buildPath("gcc-snapshot");
 
-        tryMkdir(_extractFolder);
-        tryMkdir(_buildFolder);
-        tryMkdir(_installFolder);
-        tryMkdir(_dependsFolder);
         tryMkdir(_sourceFolder);
         tryMkdir(_vanillaFolder);
-        tryMkdir(_snapshotFolder);
     }
 
     CTNGBuild createInstance(Toolchain toolchain)
@@ -280,6 +275,9 @@ public:
 
         tryRemove(_backend._snapshotFolder);
         mkdir(_backend._snapshotFolder);
+
+        tryRemove(_backend._snapshotFolder);
+        mkdir(_backend._extractFolder);
     }
 
     /**
@@ -372,9 +370,10 @@ public:
      */
     void cleanup()
     {
-        remove(_backend._buildFolder);
-        remove(_backend._installFolder);
-        remove(_backend._dependsFolder);
-        remove(_backend._snapshotFolder);
+        tryRemove(_backend._buildFolder);
+        tryRemove(_backend._installFolder);
+        tryRemove(_backend._dependsFolder);
+        tryRemove(_backend._snapshotFolder);
+        tryRemove(_backend._extractFolder);
     }
 }
