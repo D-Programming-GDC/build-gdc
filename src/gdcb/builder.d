@@ -4,7 +4,7 @@ import std.file, std.exception, std.path, std.stdio, vibe.data.json;
 import std.algorithm, std.range;
 import std.string : format;
 import gdcb.config, gdcb.util, gdcb.website;
-import gdcb.backend.base, gdcb.backend.ctng;
+import gdcb.backend.base, gdcb.backend.ctng, gdcb.backend.armEmbedded;
 
 /**
  * 
@@ -281,6 +281,7 @@ public:
         import gdcb.backend.ctng;
 
         _backends ~= new CTNGBackend();
+        _backends ~= new ArmEmbeddedBackend();
         initFolders();
     }
 
