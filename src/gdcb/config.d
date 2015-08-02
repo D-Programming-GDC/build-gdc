@@ -31,11 +31,10 @@ struct ToolchainConfig
     @optional string comment;
     @optional string runtimeLink;
     @optional string[] multilib;
-    @optional Json buildConfig;
+    @optional Json backendConfig;
     @optional string[] depends;
     string buildID;
 
-    string ctTarget;
     string backend;
 
     @ignore string path;
