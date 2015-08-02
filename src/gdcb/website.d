@@ -32,11 +32,17 @@ private:
     {
         import std.algorithm : endsWith;
 
+        if (toolchain.config.backend != "ctng")
+        {
+            return format("http://gdcproject.org/downloads/binaries/%s/%s/%s",
+                toolchain.source.gccVersion, toolchain.config.host.triplet, toolchain.filename);
+        }
+
         string extension;
         if (toolchain.filename.endsWith(".tar.xz"))
             extension = "tar.xz";
         else if (toolchain.filename.endsWith(".7z"))
-            extension = "tar.xz";
+            extension = "7z";
         else
             throw new Exception("Invalid extension in filname: " ~ toolchain.filename);
 
