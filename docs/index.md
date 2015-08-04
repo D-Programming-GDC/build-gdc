@@ -19,6 +19,7 @@ Hosts:
 
 - Windows
 - Linux
+- Bare Metal
 
 Architectures:
 
@@ -37,6 +38,7 @@ Compiler types:
 Backends:
 
 - [crosstool-NG][2]
+- [GCC ARM Embedded][7]
 
 Contribute
 ----------
@@ -62,3 +64,4 @@ The project is licensed under the Boost license.
 [4]: http://bugzilla.gdcproject.org/
 [5]: https://github.com/D-Programming-GDC/build-gdc
 [6]: http://forum.dlang.org/group/gdc
+[7]: https://launchpad.net/gcc-arm-embedded
