@@ -24,5 +24,5 @@ necessary as we build with a newer mingw GCC which generates more warnings
 in binutils.
 
 Note: unlike the original build scripts we do not build for i686 linux,
-we build for x86_64 linux. This is cause by a limitation of the build
-scripts which build for the native machine arch.
+we build for x86_64 linux. This is caused by a limitation of the build
+scripts which always build for the native machine arch.
