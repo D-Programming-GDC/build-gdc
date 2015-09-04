@@ -164,12 +164,15 @@ private:
         return release;
     }
 
-    void addToBuilds(Toolchain toolchain)
+    void addToBuilds(Toolchain toolchain, uint num)
     {
         HostJSON host = getHost(builtHosts, toolchain);
         DownloadSetJSON set = getSet(host.sets, toolchain);
 
-        set.downloads ~= getDownload(toolchain);
+        auto download = getDownload(toolchain);
+        download.url = getDownloadURL(toolchain);
+        download.release = num;
+        set.downloads ~= download;
     }
 
 public:
@@ -232,9 +235,8 @@ public:
      */
     void addToolchain(Toolchain toolchain)
     {
-        addToBuilds(toolchain);
-
         auto num = addToDatabase(toolchain);
         addToDownload(toolchain, num);
+        addToBuilds(toolchain, num);
     }
 }
