@@ -1,4 +1,8 @@
-dub.userprefs
 build-gdc
+dub.userprefs
 dub.selections.json
 .dub/*
+tools/move-dl/move-dl
+tools/move-dl/dub.userprefs
+tools/move-dl/dub.selections.json
+tools/move-dl/.dub/*

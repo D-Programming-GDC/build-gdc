@@ -1,0 +1,11 @@
+{
+	"name": "move-dl",
+	"targetType": "executable",
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2014, jpf",
+	"authors": ["jpf"],
+	"dependencies": {
+		"vibe-d": "==0.7.23"
+	},
+	"versions": ["VibeCustomMain"]
+}
