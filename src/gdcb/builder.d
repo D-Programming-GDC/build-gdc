@@ -1,6 +1,8 @@
 module gdcb.builder;
 
-import std.file, std.exception, std.path, std.stdio, vibe.data.json;
+import core.time;
+import std.concurrency, std.file, std.exception, std.path, std.stdio,
+    vibe.data.json;
 import std.algorithm, std.range;
 import std.string : format;
 import gdcb.config, gdcb.util, gdcb.website;
@@ -275,6 +277,7 @@ public:
     bool initDL = false;
     bool initDB = false;
     bool verbose = false;
+    uint keepAlive = 0;
 
     this()
     {
@@ -297,6 +300,21 @@ public:
     bool buildToolchains(string[] ids, GitID[GCCVersion] sourceInfo = null,
         GitID configID = GitID("origin/master"))
     {
+        Tid keepAliveTid;
+        if (keepAlive != 0)
+        {
+            auto interval = dur!"seconds"(keepAlive);
+            writeln("Starting thread to periodically print to stdout every %s", interval);
+            keepAliveTid = spawn(&keepAliveThread, interval);
+        }
+        scope (exit)
+        {
+            if (keepAlive != 0)
+            {
+                send(keepAliveTid, true);
+            }
+        }
+
         loadWebsiteGIT();
         website = new DownloadSite();
         if (!initDL)
@@ -345,6 +363,20 @@ public:
         website.saveBuilds(configuration.resultBuildFile);
 
         return result;
+    }
+}
+
+void keepAliveThread(Duration interval)
+{
+    bool keepRunning = true;
+    while (keepRunning)
+    {
+        writeln("\n.");
+        stdout.flush();
+        receiveTimeout(interval, (bool b) {
+            writeln("Exiting keepAlive thread.");
+            keepRunning = false;
+        },);
     }
 }
 
