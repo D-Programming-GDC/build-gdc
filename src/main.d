@@ -43,14 +43,11 @@ int main(string[] args)
         getopt(args, config.noPassThrough, "help", &help, "toolchain",
             &toolchains, "init-downloads", &initDL, "init-database", &initDB,
             "toolchain-list", &toolchainList, "verbose", &verbose,
-            "revision", &handleRev, "config-revision", &configRev,
-            "keep-alive", &keepAlive);
+            "revision", &handleRev, "config-revision", &configRev, "keep-alive", &keepAlive);
 
         if (help)
             writeln(
-                "Usage: build-gdc build [--verbose] [--toolchain='id'] [--toolchain-list='path']" ~
-                "\n\t [--init-database] [--init-downloads] [--revision=GCCVersion:rev] [--config-revision=rev]" ~
-                "\n\t [--keep-alive=N]");
+                "Usage: build-gdc build [--verbose] [--toolchain='id'] [--toolchain-list='path']" ~ "\n\t [--init-database] [--init-downloads] [--revision=GCCVersion:rev] [--config-revision=rev]" ~ "\n\t [--keep-alive=N]");
         else
         {
             auto builder = new Builder();

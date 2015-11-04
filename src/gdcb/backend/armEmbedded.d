@@ -25,8 +25,8 @@ public:
     {
         _verbose = verbose;
         _sourceInfo = sourceInfo;
-        auto dependsFolder = configuration.sharedFolder.buildPath("sources", "gcc-arm-embedded");
-        tryMkdir(dependsFolder);
+        auto srcFolder = configuration.sharedFolder.buildPath("sources", "gcc-arm-embedded");
+        tryMkdir(srcFolder);
     }
 
     ArmEmbeddedBuild createInstance(Toolchain toolchain)
