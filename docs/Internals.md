@@ -26,3 +26,17 @@ in binutils.
 Note: unlike the original build scripts we do not build for i686 linux,
 we build for x86_64 linux. This is caused by a limitation of the build
 scripts which always build for the native machine arch.
+
+### devkitPro Backend
+
+This backend builds bare metal compilers based on [devkitpro.org][1]
+build scripts. [DevkitPro][1] generates compilers for Nintendo GBA,
+Nintendo DS, Nintendo 3DS, Nintendo Gamecube, Nintendo Wii, Nintendo WiiU
+as well as Sony PSP. All these toolchains except for the PSP tooclhain are
+supported by the GDC docker build container. The GCC version used in the
+PSP toolchain is not supported by GDC. The build container builds an addon
+which the toolchain user has to install in addition to the
+devkitpro.org][1] base toolchains.
+
+
+[1]: https://devkitpro.org/

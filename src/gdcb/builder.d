@@ -6,10 +6,11 @@ import std.concurrency, std.file, std.exception, std.path, std.stdio,
 import std.algorithm, std.range;
 import std.string : format;
 import gdcb.config, gdcb.util, gdcb.website;
-import gdcb.backend.base, gdcb.backend.ctng, gdcb.backend.armEmbedded;
+import gdcb.backend.base, gdcb.backend.ctng, gdcb.backend.armEmbedded,
+    gdcb.backend.dkpro;
 
 /**
- * 
+ *
  */
 class Builder
 {
@@ -285,6 +286,7 @@ public:
 
         _backends ~= new CTNGBackend();
         _backends ~= new ArmEmbeddedBackend();
+        _backends ~= new DKProBackend();
         initFolders();
     }
 
