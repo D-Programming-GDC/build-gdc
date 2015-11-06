@@ -14,6 +14,7 @@ struct BackendConfig
     string dkName;
     string baseToolchain;
     string filename;
+    @optional string gdbVersion;
 }
 
 class DKProBackend : Backend
@@ -185,6 +186,9 @@ private:
             tryMkdir(dest);
             execute("cp", entry, dest);
         }
+
+        if (!_backendConfig.gdbVersion.empty)
+            execute("cp", "-R", dkSubDir.buildPath("gdb-" ~ _backendConfig.gdbVersion), installFolder);
 
         copyExtraFiles(_toolchain.config.path, installFolder);
 
