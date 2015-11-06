@@ -263,6 +263,8 @@ public:
             env["CROSSBUILD"] = _toolchain.config.host.triplet;
         }
         env["COMP_LIBS"] = compLibs;
+        env["DMD_FE"] = _toolchain.source.dmdFE;
+        env["GDC_REV"] = _toolchain.source.gdcRevision;
 
         execute(env, "./build-devkit.sh");
 
