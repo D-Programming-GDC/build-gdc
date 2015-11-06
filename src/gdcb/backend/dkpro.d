@@ -168,7 +168,7 @@ private:
         }
 
         string[] files;
-        string[] glob = ["*libexec/gcc/*/*/cc1d*", "*bin/*gdc*", "*bin/*gcc.exe", "*bin/*gcc"];
+        string[] glob = ["*libexec/gcc/*/*/cc1d*", "*bin/*gdc*"];
         foreach (entry; dkSubDir.dirEntries(SpanMode.breadth))
         {
             foreach (gentry; glob)
