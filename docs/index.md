@@ -39,6 +39,7 @@ Backends:
 
 - [crosstool-NG][2]
 - [GCC ARM Embedded][7]
+- [devkitPro][8]
 
 Contribute
 ----------
@@ -65,3 +66,4 @@ The project is licensed under the Boost license.
 [5]: https://github.com/D-Programming-GDC/build-gdc
 [6]: http://forum.dlang.org/group/gdc
 [7]: https://launchpad.net/gcc-arm-embedded
+[8]: https://devkitpro.org

@@ -36,7 +36,7 @@ as well as Sony PSP. All these toolchains except for the PSP tooclhain are
 supported by the GDC docker build container. The GCC version used in the
 PSP toolchain is not supported by GDC. The build container builds an addon
 which the toolchain user has to install in addition to the
-devkitpro.org][1] base toolchains.
+[devkitpro.org][1] base toolchains.
 
 
 [1]: https://devkitpro.org/
