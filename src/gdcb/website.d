@@ -13,16 +13,35 @@ class DownloadJSON
     uint release;
 }
 
+class SpecialDownloadJSON
+{
+    string url;
+    string buildID;
+    string[string] values;
+}
+
 class DownloadSetJSON
 {
     string name, comment, targetHeader, id;
     DownloadJSON[] downloads;
 }
 
+class SpecialSetJSON
+{
+    string name;
+    SpecialDownloadJSON[] downloads;
+}
+
 class HostJSON
 {
     string name, triplet, archiveURL, comment;
     DownloadSetJSON[] sets;
+}
+
+class DownloadFileJSON
+{
+    @optional HostJSON[] standardBuilds;
+    @optional SpecialSetJSON[] specialToolchains;
 }
 
 class DownloadSite
@@ -32,7 +51,11 @@ private:
     {
         import std.algorithm : endsWith;
 
-        if (toolchain.config.backend != "ctng")
+        if (!toolchain.config.url.empty)
+        {
+            return toolchain.config.url ~ toolchain.filename;
+        }
+        else if (toolchain.config.backend != "ctng")
         {
             return format("http://gdcproject.org/downloads/binaries/%s/%s/%s",
                 toolchain.source.gccVersion, toolchain.config.host.triplet, toolchain.filename);
@@ -96,7 +119,7 @@ private:
             auto configset = toolchain.config.host.downloadSets.find!"a.id == b"(
                 toolchain.config.set);
             enforce(!configset.empty, "Unknown download set " ~ toolchain.config.set);
-
+            
             set.targetHeader = configset.front.targetHeader;
             set.name = configset.front.name;
             set.comment = configset.front.comment;
@@ -107,7 +130,26 @@ private:
         {
             set = setRange.front;
         }
+        
+        return set;
+    }
 
+    /// Use existing set if possible, otherwise create new
+    SpecialSetJSON getSpecialSet(ref SpecialSetJSON[] root, Toolchain toolchain)
+    {
+        auto setRange = root.find!"a.name == b"(toolchain.specialToolchainName);
+        SpecialSetJSON set;
+        if (setRange.empty)
+        {
+            set = new SpecialSetJSON();
+            set.name = toolchain.specialToolchainName;
+            root ~= set;
+        }
+        else
+        {
+            set = setRange.front;
+        }
+        
         return set;
     }
 
@@ -136,13 +178,30 @@ private:
 
     void addToDownload(Toolchain toolchain, uint num)
     {
-        HostJSON host = getHost(dlHosts, toolchain);
+        if (!toolchain.specialToolchainName.empty)
+        {
+            auto set = getSpecialSet(dlFile.specialToolchains, toolchain);
+            // We only keep one build with same buildID in download list
+            set.downloads = set.downloads.remove!(a => a.buildID == toolchain.config.buildID)();
+            auto download = new SpecialDownloadJSON();
+            download.url = getDownloadURL(toolchain);
+            download.buildID = toolchain.config.buildID;
+            download.values = toolchain.downloadInfo;
+            download.values["gdcRev"] = toolchain.source.gdcRevision[0 .. 10];
+            download.values["buildDate"] = format("%04d-%02d-%02d",
+                toolchain.source.date.year, toolchain.source.date.month, toolchain.source.date.day);
+            set.downloads ~= download;
+            return;
+        }
+
+        HostJSON host = getHost(dlFile.standardBuilds, toolchain);
         DownloadSetJSON set = getSet(host.sets, toolchain);
 
         // We only keep one build with same buildID in download list
         set.downloads = set.downloads.remove!(a => a.buildID == toolchain.config.buildID)();
 
         auto download = getDownload(toolchain);
+        download.gdcRev = download.gdcRev[0 .. 10];
         download.url = getDownloadURL(toolchain);
         download.release = num;
         set.downloads ~= download;
@@ -177,7 +236,7 @@ private:
 
 public:
     // downloads.json
-    HostJSON[] dlHosts;
+    DownloadFileJSON dlFile;
 
     // database.json
     HostJSON[] dbHosts;
@@ -196,7 +255,7 @@ public:
     void loadDownloadList(string path)
     {
         auto content = readText(path);
-        deserializeJson(dlHosts, parseJsonString(content));
+        deserializeJson(dlFile, parseJsonString(content));
     }
 
     /**
@@ -212,7 +271,7 @@ public:
     void saveDownloadList(string path)
     {
         File file = File(path, "w");
-        file.rawWrite(serializeToJson(dlHosts).toPrettyString());
+        file.rawWrite(serializeToJson(dlFile).toPrettyString());
         file.close();
     }
 

@@ -273,6 +273,13 @@ public:
         execute(env, "./build-devkit.sh");
 
         finishArchive();
+
+        _toolchain.specialToolchainName = _backendConfig.dkName;
+        _toolchain.downloadInfo["filename"] = _toolchain.filename;
+        _toolchain.downloadInfo["comment"] = _toolchain.config.comment;
+        _toolchain.downloadInfo["runtime"] = _toolchain.config.runtime;
+        _toolchain.downloadInfo["dmdFE"] = _toolchain.source.dmdFE;
+        _toolchain.downloadInfo["md5Sum"] = _toolchain.md5Sum;
     }
 
     /**

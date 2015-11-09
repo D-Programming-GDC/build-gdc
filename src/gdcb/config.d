@@ -33,9 +33,11 @@ struct ToolchainConfig
     @optional string[] multilib;
     @optional Json backendConfig;
     @optional string[] depends;
+    @optional string url;
     string buildID;
 
     string backend;
+
 
     @ignore string path;
     @ignore HostInfo host;

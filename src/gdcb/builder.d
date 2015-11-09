@@ -409,6 +409,17 @@ class Toolchain
     bool failed = false;
 
     /**
+     * Set by builder. If set, the toolchain will get it's own section on 
+     * the download page.
+     */
+    string specialToolchainName = "";
+
+    /**
+     * Key-Value pairs used for the download page for special toolchains.
+     */
+    string[string] downloadInfo;
+
+    /**
      * The toolchain id is the path relative to the configs folder.
      */
     string toolchainID;
