@@ -79,37 +79,15 @@ private:
     SourceInfo setupGDC()
     {
         writeln(": Preparing GDC");
-        GitID gdcID;
-
-        switch (_backendConfig.gccVersion[0 .. 3])
-        {
-        case "4.7":
-            gdcID = _backend._sourceInfo[GCCVersion.V4_7];
-            break;
-        case "4.8":
-            gdcID = _backend._sourceInfo[GCCVersion.V4_8];
-            break;
-        case "4.9":
-            gdcID = _backend._sourceInfo[GCCVersion.V4_9];
-            break;
-        default:
-            switch (_backendConfig.gccVersion[0 .. 1])
-            {
-            case "5":
-                gdcID = _backend._sourceInfo[GCCVersion.V5];
-                break;
-            default:
-                enforce(false, format("Unknown GCC version '%s'", _backendConfig.gccVersion));
-            }
-        }
+        GitID gdcID = _backend._sourceInfo[_backendConfig.gccVersion.toGCCVersion()];
 
         chdir(configuration.gdcFolder);
         execute("git", "checkout", gdcID.value);
 
         SourceInfo info;
         info.gdcRevision = chomp(std.process.execute(["git", "rev-parse", "HEAD"]).output);
-        info.dmdFE = chomp(readText(configuration.gdcFolder.buildPath("gcc", "d", "VERSION"))).replace("\"",
-            "");
+        info.dmdFE = chomp(readText(configuration.gdcFolder.buildPath("gcc",
+            "d", "VERSION"))).replace("\"", "");
         info.gccVersion = _backendConfig.gccVersion;
         info.date = Clock.currTime;
 
@@ -188,7 +166,14 @@ private:
         }
 
         if (!_backendConfig.gdbVersion.empty)
-            execute("cp", "-R", dkSubDir.buildPath("gdb-" ~ _backendConfig.gdbVersion), installFolder);
+            execute("cp", "-R",
+                dkSubDir.buildPath("gdb-" ~ _backendConfig.gdbVersion), installFolder);
+
+        // Build GDMD
+        auto gdmd = buildGDMD(_toolchain.config.host.triplet,
+            _toolchain.config.host.triplet == _toolchain.config.target,
+            _toolchain.config.gdmdRev, _backendConfig.gccVersion.toGCCVersion());
+        installGDMD(gdmd, installFolder);
 
         copyExtraFiles(_toolchain.config.path, installFolder);
 

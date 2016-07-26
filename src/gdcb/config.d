@@ -17,6 +17,7 @@ struct Configuration
     string resultDBFile = "/home/build/shared/result/database.json";
     string resultBuildFile = "/home/build/shared/result/built-toolchains.json";
     string gdcFolder = "/home/build/GDC";
+    string gdmdFolder = "/home/build/GDMD";
     string websiteFolder = "/home/build/gdcproject";
 }
 
@@ -34,10 +35,10 @@ struct ToolchainConfig
     @optional Json backendConfig;
     @optional string[] depends;
     @optional string url;
+    @optional string gdmdRev = "dport";
     string buildID;
 
     string backend;
-
 
     @ignore string path;
     @ignore HostInfo host;

@@ -1,6 +1,6 @@
 module gdcb.backend.base;
 
-import std.datetime;
+import std.datetime, std.exception, std.stdio, std.path;
 import gdcb.builder, gdcb.config, gdcb.util;
 
 /**
@@ -147,4 +147,121 @@ void createArchive(string srcdir, string resultFile)
         executeShell(format("tar -cf - %s | xz -9 -c - > %s", srcdir, resultFile));
     else
         assert(false, "Invalid file extension");
+}
+
+GCCVersion toGCCVersion(string ver)
+{
+    if (ver == "custom")
+    {
+        return GCCVersion.snapshot;
+    }
+    else
+    {
+        switch (ver[0 .. 3])
+        {
+        case "4.7":
+            return GCCVersion.V4_7;
+        case "4.8":
+            return GCCVersion.V4_8;
+        case "4.9":
+            return GCCVersion.V4_9;
+        default:
+            switch (ver[0 .. 1])
+            {
+            case "5":
+                return GCCVersion.V5;
+            default:
+                enforce(false, format("Unknown GCC version '%s'", ver));
+            }
+        }
+    }
+    assert(0);
+}
+
+/**
+ * Build GDMD for host.
+ * Params:
+ *     host = host identifier used to find a host compiler
+ *     ver = version of GDMD to build.
+ *     gccVer = gcc version to be used by GDMD
+ * Returns:
+ *     path to the compiled file in a temporary directory.
+ */
+string buildGDMD(string host, bool isNative, string ver, GCCVersion gccVer)
+{
+    import std.process : environment;
+
+    writeln(": Building GDMD");
+    string gccConfig;
+    final switch (gccVer)
+    {
+    case GCCVersion.snapshot:
+        gccConfig = "gdc7";
+        break;
+    case GCCVersion.V5:
+        gccConfig = "gdc5";
+        break;
+    case GCCVersion.V4_9:
+        gccConfig = "gdc4.9";
+        break;
+    case GCCVersion.V4_8:
+        gccConfig = "gdc4.8";
+        break;
+    case GCCVersion.V4_7:
+        assert(0);
+    }
+
+    // FIXME: No windows cross compiler, use precompiled binaries
+    if (host == "i686-w64-mingw32" || host == "x86_64-w64-mingw32")
+    {
+        writeln(": Use precompiled GDMD for windows hosts");
+        return configuration.sharedFolder.buildPath("gdmd-bin",
+            host ~ "-" ~ gccConfig ~ "-" ~ ver ~ "-gdmd.exe");
+    }
+
+    string compiler = "/home/build/host-gdc/".buildPath(host, "bin", host ~ "-gdc");
+    chdir(configuration.gdmdFolder);
+    execute("git", "checkout", ver, "-f");
+
+    auto env = environment.toAA();
+    if (isNative)
+        env["DFLAGS"] = "-fversion=UseSystemAR";
+    execute(env, "dub", "build", "-f", "--compiler=" ~ compiler,
+        "--config=" ~ gccConfig);
+
+    auto stripPath = "/home/build/host-gdc/".buildPath(host, "bin", host ~ "-strip");
+    if (host == "x86_64-linux-gnu")
+        stripPath = "strip";
+
+    string resultFile = configuration.gdmdFolder.buildPath("gdmd");
+    execute(stripPath, resultFile);
+
+    return resultFile;
+}
+
+void installGDMD(string gdmd, string installFolder)
+{
+    import std.file, std.algorithm, std.array;
+
+    string installedGDMD;
+    foreach (DirEntry entry; installFolder.dirEntries(SpanMode.breadth))
+    {
+        if (entry.isFile && entry.name.canFind("gdc"))
+        {
+            writefln(": Installing GDMD for %s", entry.name);
+            string target = entry.name.replace("gdc", "gdmd");
+            if (installedGDMD.empty)
+            {
+                copy(gdmd, target);
+                installedGDMD = target;
+            }
+            else
+            {
+                chdir(target.dirName());
+                execute("ln", "-s",
+                    installedGDMD.relativePath(target.dirName()), target.baseName());
+            }
+            execute("chmod", "+x", target);
+        }
+    }
 }

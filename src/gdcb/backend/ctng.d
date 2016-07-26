@@ -1,6 +1,6 @@
 module gdcb.backend.ctng;
 
-import std.path, std.exception, std.stdio;
+import std.array, std.path, std.exception, std.stdio;
 import std.string : format;
 import file = std.file;
 
@@ -45,35 +45,7 @@ private:
         import std.string, std.array, std.datetime;
 
         enforce(ver.length > 2, "Unknown GCC version");
-        GitID gdcID;
-        if (ver == "custom")
-        {
-            gdcID = _sourceInfo[GCCVersion.snapshot];
-        }
-        else
-        {
-            switch (ver[0 .. 3])
-            {
-            case "4.7":
-                gdcID = _sourceInfo[GCCVersion.V4_7];
-                break;
-            case "4.8":
-                gdcID = _sourceInfo[GCCVersion.V4_8];
-                break;
-            case "4.9":
-                gdcID = _sourceInfo[GCCVersion.V4_9];
-                break;
-            default:
-                switch (ver[0 .. 1])
-                {
-                case "5":
-                    gdcID = _sourceInfo[GCCVersion.V5];
-                    break;
-                default:
-                    enforce(false, format("Unknown GCC version '%s'", ver));
-                }
-            }
-        }
+        GitID gdcID = _sourceInfo[ver.toGCCVersion()];
 
         chdir(configuration.gdcFolder);
         execute("git", "checkout", gdcID.value);
@@ -123,8 +95,8 @@ private:
         execute("./setup-gcc.sh", extractedPath);
         SourceInfo info;
         info.gdcRevision = chomp(std.process.execute(["git", "rev-parse", "HEAD"]).output);
-        info.dmdFE = chomp(file.readText(configuration.gdcFolder.buildPath("gcc", "d",
-            "VERSION"))).replace("\"", "");
+        info.dmdFE = chomp(file.readText(configuration.gdcFolder.buildPath("gcc",
+            "d", "VERSION"))).replace("\"", "");
         if (ver == "custom")
             info.gccVersion = gccName[4 .. $];
         else
@@ -347,9 +319,15 @@ public:
             throw e;
         }
 
+        string installFolder = findCTNGInstallFolder();
+        // Build GDMD
+        auto gdmd = buildGDMD(_toolchain.config.host.triplet,
+            _toolchain.config.host.triplet == _toolchain.config.target,
+            _toolchain.config.gdmdRev, ver.toGCCVersion());
+        installGDMD(gdmd, installFolder);
+
         // Copy extra files
         writeln(": Copying extra files");
-        string installFolder = findCTNGInstallFolder();
         if (_backend._verbose)
             writefln(": Install folder: %s", installFolder);
         copyExtraFiles(_toolchain.config.path, installFolder);

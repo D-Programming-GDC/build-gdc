@@ -63,6 +63,13 @@ private:
         return result;
     }
 
+    void updateGDMD()
+    {
+        writeln(": Updating GDMD");
+        gdcb.util.chdir(configuration.gdmdFolder);
+        execute("git", "remote", "update");
+    }
+
     void updateGDC()
     {
         writeln(": Updating GDC");
@@ -336,6 +343,7 @@ public:
         if (!(GCCVersion.V5 in sourceInfo))
             sourceInfo[GCCVersion.V5] = GitID("origin/gdc-5");
 
+        updateGDMD();
         updateGDC();
         updateConfigs();
         checkoutConfigs(configID);
